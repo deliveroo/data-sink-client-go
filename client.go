@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"net/http"
+	"net/url"
 
 	"github.com/pkg/errors"
 )
@@ -69,14 +70,14 @@ func (c *client) Post(stream Stream, msg Message) error {
 }
 
 func (c *client) PostGzipped(stream Stream, msg Message) error {
-	url := c.url + endpoint + "/" + stream.ID
+	path := c.url + endpoint + "/" + url.PathEscape(stream.ID)
 	if stream.PartitionKey != "" {
-		url += "?partition_key=" + stream.PartitionKey
+		path += "?partition_key=" + url.QueryEscape(stream.PartitionKey)
 	}
 
 	buf := bytes.NewBuffer(msg)
 
-	req, err := http.NewRequest(http.MethodPost, url, buf)
+	req, err := http.NewRequest(http.MethodPost, path, buf)
 	if err != nil {
 		return errors.Wrapf(err, "datasink: creating request")
 	}
