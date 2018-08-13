@@ -31,8 +31,8 @@ func TestMock(t *testing.T) {
 
 		err := m.Post(stream, msg)
 		g.Expect(err).ToNot(HaveOccurred())
-
-		g.Expect(m.Messages).To(ConsistOf([][]byte{msg}))
+		g.Expect(m.Messages).To(HaveKeyWithValue(stream, []datasink.Message{msg}))
+		g.Expect(m.Messages).To(HaveLen(1))
 	})
 
 	t.Run("PostGzipped", func(t *testing.T) {
@@ -49,6 +49,7 @@ func TestMock(t *testing.T) {
 
 		err := m.PostGzipped(stream, gzipped)
 		g.Expect(err).ToNot(HaveOccurred())
-		g.Expect(m.Messages).To(ConsistOf([][]byte{gzipped}))
+		g.Expect(m.Messages).To(HaveKeyWithValue(stream, []datasink.Message{gzipped}))
+		g.Expect(m.Messages).To(HaveLen(1))
 	})
 }
