@@ -19,7 +19,7 @@
 * [type Message](#Message)
 * [type Mock](#Mock)
   * [func NewMockClient() Mock](#NewMockClient)
-  * [func (m *Mock) Post(_ Stream, msg Message) error](#Mock.Post)
+  * [func (m *Mock) Post(stream Stream, msg Message) error](#Mock.Post)
   * [func (m *Mock) PostGzipped(stream Stream, msg Message) error](#Mock.PostGzipped)
 * [type Stream](#Stream)
 
@@ -106,10 +106,10 @@ Message is the payload to be sent to the Data Sink stream.
 
 
 
-## <a name="Mock">type</a> [Mock](./mock.go?s=181:220#L5)
+## <a name="Mock">type</a> [Mock](./mock.go?s=181:232#L5)
 ``` go
 type Mock struct {
-    Messages [][]byte
+    Messages map[Stream][]Message
 }
 
 ```
@@ -122,7 +122,7 @@ Messages are stored exactly as they are sent to the client (e.g. still [un]gzipe
 
 
 
-### <a name="NewMockClient">func</a> [NewMockClient](./mock.go?s=266:291#L10)
+### <a name="NewMockClient">func</a> [NewMockClient](./mock.go?s=278:303#L10)
 ``` go
 func NewMockClient() Mock
 ```
@@ -132,16 +132,16 @@ NewMockClient creates a new Mock client.
 
 
 
-### <a name="Mock.Post">func</a> (\*Mock) [Post](./mock.go?s=356:404#L15)
+### <a name="Mock.Post">func</a> (\*Mock) [Post](./mock.go?s=416:469#L16)
 ``` go
-func (m *Mock) Post(_ Stream, msg Message) error
+func (m *Mock) Post(stream Stream, msg Message) error
 ```
 Post sends a message to the Mock client.
 
 
 
 
-### <a name="Mock.PostGzipped">func</a> (\*Mock) [PostGzipped](./mock.go?s=567:627#L22)
+### <a name="Mock.PostGzipped">func</a> (\*Mock) [PostGzipped](./mock.go?s=648:708#L23)
 ``` go
 func (m *Mock) PostGzipped(stream Stream, msg Message) error
 ```
