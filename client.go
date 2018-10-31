@@ -58,6 +58,23 @@ func NewClient(url string, http Doer) (Client, error) {
 	}, nil
 }
 
+// NewRequest builds a data sink compatable http.Request.
+func NewRequest(requestURL string, stream Stream, msg Message) (*http.Request, error) {
+	path := requestURL + endpoint + "/" + url.PathEscape(stream.ID)
+	if stream.PartitionKey != "" {
+		path += "?partition_key=" + url.QueryEscape(stream.PartitionKey)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, path, bytes.NewBuffer(msg))
+	if err != nil {
+		return req, errors.Wrapf(err, "datasink: creating request")
+	}
+
+	req.Header.Set("Content-Encoding", "application/gzip")
+	req.Header.Set("Content-Type", "application/octet-stream")
+	return req, nil
+}
+
 func (c *client) Post(stream Stream, msg Message) error {
 	// Add a newline before compressing so that the files in S3 are readable.
 	msg = append(msg, '\n')
@@ -66,24 +83,25 @@ func (c *client) Post(stream Stream, msg Message) error {
 	if err != nil {
 		return err
 	}
-	return c.PostGzipped(stream, body)
+
+	request, err := NewRequest(c.url, stream, body)
+	if err != nil {
+		return err
+	}
+
+	return c.executeRequest(request)
 }
 
 func (c *client) PostGzipped(stream Stream, msg Message) error {
-	path := c.url + endpoint + "/" + url.PathEscape(stream.ID)
-	if stream.PartitionKey != "" {
-		path += "?partition_key=" + url.QueryEscape(stream.PartitionKey)
-	}
-
-	buf := bytes.NewBuffer(msg)
-
-	req, err := http.NewRequest(http.MethodPost, path, buf)
+	request, err := NewRequest(c.url, stream, msg)
 	if err != nil {
-		return errors.Wrapf(err, "datasink: creating request")
+		return err
 	}
-	req.Header.Set("Content-Encoding", "application/gzip")
-	req.Header.Set("Content-Type", "application/octet-stream")
 
+	return c.executeRequest(request)
+}
+
+func (c *client) executeRequest(req *http.Request) error {
 	resp, err := c.http.Do(req)
 	if err != nil {
 		return errors.Wrapf(err, "datasink: making request")
@@ -92,7 +110,6 @@ func (c *client) PostGzipped(stream Stream, msg Message) error {
 	if resp.StatusCode >= 400 {
 		return errors.Errorf("datasink: returned non-OK response %d", resp.StatusCode)
 	}
-
 	return nil
 }
 
